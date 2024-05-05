@@ -1,0 +1,11 @@
+a = input('Digite algo: \n')
+print('O tipo de variavel é de que tipo?')
+print(type(a))
+print("O valor da variavél é número?", a.isnumeric())
+print('O valor da variavél é uma letra?', a.isalpha())
+print('O valor da variavél tem espaço?', a.isspace())
+print('O valor da variavél é um título?', a.istitle())
+print('O valor da variavél é uma letra e número?:', a.isalnum())
+print('O valor da variavél tem letra maiúscula?', a.isupper())
+print('O valor da variavél tem letra minúscula?', a.islower())
+
