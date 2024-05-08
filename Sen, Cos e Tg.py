@@ -8,7 +8,7 @@ print('O ângulo de {} tem o COSSENO de {:.2f}'.format(ângulo, cosseno))
 tangente = math.tan(math.radians(ângulo))
 print('O ângulo de {} tem o valor a TANGENTE de {:.0f}'.format(ângulo, tangente))"""
 
-#Usando com  o calculo com o método from"
+#Usando o calculo com o método from"
 """from math import radians, sin, cos,tan
 ângulo = float(input('Digite o valor do ângulo \nX= '))
 seno = sin(radians(ângulo))
