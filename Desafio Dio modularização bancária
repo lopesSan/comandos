@@ -1,0 +1,175 @@
+### Simulador Bancário ###
+
+from datetime import datetime
+
+# Constantes
+LIMITE_SAQUE = 1000
+LIMITE_SAQUES_DIARIOS = 3
+AGENCIA_NUMERO = "1469e"
+usuarios = []
+contas = []
+proximo_numero_conta = 1
+
+class Usuario:
+    def __init__(self, nome, endereco, data_nascimento, cpf):
+        self.nome = nome
+        self.endereco = endereco
+        self.data_nascimento = data_nascimento
+        self.cpf = cpf
+        self.contas = []
+
+    def adicionar_conta(self, conta):
+        self.contas.append(conta)
+
+class ContaCorrente:
+    def __init__(self, usuario):
+        global proximo_numero_conta
+        self.agencia = AGENCIA_NUMERO
+        self.numero = proximo_numero_conta
+        self.usuario = usuario
+        self.saldo = 0
+        self.extrato = ""
+        self.numero_saques = 0
+        proximo_numero_conta += 1
+
+# Funções de Interface
+def mostrar_menu():
+    return """
+[1] Deposito
+[2] Sacar
+[3] Extrato
+[4] Criar Usuário
+[5] Criar Conta Corrente
+[6] Sair
+
+=> """
+
+# Funções de Operações Bancárias
+def deposito(saldo, valor, /, extrato):
+    if valor > 0:
+        saldo += valor
+        data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        extrato += f"{data_hora} - Depósito: R$ {valor:.2f} \n"
+        print("Depósito realizado com sucesso!")
+    else:
+        print("Falha na operação! O valor informado é inválido.")
+    return saldo, extrato
+
+def saque(*, saldo, valor, extrato, limite, numero_saques, limite_saques):
+    saldo_excedido = valor > saldo
+    excedeu_limite = valor > limite
+    saque_do_dia_excedido = numero_saques >= limite_saques
+
+    if saldo_excedido:
+        print("Falha na operação! Você não tem saldo suficiente.")
+    elif excedeu_limite:
+        print("Falha na operação! O valor do saque excedeu o limite.")
+    elif saque_do_dia_excedido:
+        print("Falha na operação! Número de saques diários excedido.")
+    elif valor > 0:
+        saldo -= valor
+        data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        extrato += f"{data_hora} - Saque: R$ {valor:.2f}\n"
+        numero_saques += 1
+        print("Saque realizado com sucesso!")
+    else:
+        print("A operação falhou! O valor informado é inválido.")
+    return saldo, extrato, numero_saques
+
+def exibir_extrato(saldo, extrato):
+    print("================ EXTRATO ================")
+    print("Não foram realizadas movimentações." if not extrato else extrato)
+    print(f"\nSaldo: R$ {saldo:.2f}")
+    print("=========================================")
+
+# Funções de Criação de Usuário e Conta Corrente
+def criar_usuario():
+    nome = input("Digite o nome completo do usuário: ")
+    endereco = input("Digite o endereço (logradouro, bairro, cidade, estado): ")
+    data_nascimento = input("Digite a data de nascimento (dd/mm/yyyy): ")
+    cpf = input("Digite o CPF (11 dígitos): ")
+
+    if len(cpf) != 11 or not cpf.isdigit():
+        print("CPF inválido! Deve conter 11 dígitos.")
+        return
+
+    for usuario in usuarios:
+        if usuario.cpf == cpf:
+            print("Já existe um usuário com este CPF.")
+            return
+
+    usuario = Usuario(nome, endereco, data_nascimento, cpf)
+    usuarios.append(usuario)
+    print("Usuário criado com sucesso!")
+
+def criar_conta_corrente():
+    cpf = input("Digite o CPF do usuário: ")
+
+    usuario_encontrado = None
+    for usuario in usuarios:
+        if usuario.cpf == cpf:
+            usuario_encontrado = usuario
+            break
+
+    if not usuario_encontrado:
+        print("Usuário não encontrado!")
+        return
+
+    conta = ContaCorrente(usuario_encontrado)
+    usuario_encontrado.adicionar_conta(conta)
+    contas.append(conta)
+    print(f"Conta corrente criada com sucesso! Agência: {conta.agencia}, Número: {conta.numero}")
+
+# Função Utilitária
+def input_valor(mensagem):
+    try:
+        valor = float(input(mensagem))
+        return valor
+    except ValueError:
+        print("Valor inválido. Por favor, insira um número.")
+        return None
+
+# Função Principal
+def main():
+    while True:
+        opcao = input(mostrar_menu())
+        if opcao == "1":
+            valor = input_valor("Digite o valor do depósito: \n")
+            if valor is not None:
+                cpf = input("Digite o CPF do usuário: ")
+                conta = buscar_conta_por_cpf(cpf)
+                if conta:
+                    conta.saldo, conta.extrato = deposito(conta.saldo, valor, conta.extrato)
+        elif opcao == "2":
+            valor = input_valor("Informe o valor do saque: \n")
+            if valor is not None:
+                cpf = input("Digite o CPF do usuário: ")
+                conta = buscar_conta_por_cpf(cpf)
+                if conta:
+                    conta.saldo, conta.extrato, conta.numero_saques = saque(
+                        saldo=conta.saldo, valor=valor, extrato=conta.extrato,
+                        limite=LIMITE_SAQUE, numero_saques=conta.numero_saques, limite_saques=LIMITE_SAQUES_DIARIOS
+                    )
+        elif opcao == "3":
+            cpf = input("Digite o CPF do usuário: ")
+            conta = buscar_conta_por_cpf(cpf)
+            if conta:
+                exibir_extrato(conta.saldo, conta.extrato)
+        elif opcao == "4":
+            criar_usuario()
+        elif opcao == "5":
+            criar_conta_corrente()
+        elif opcao == "6":
+            break
+        else:
+            print("Operação inválida, por favor selecione novamente a opção desejada.")
+
+def buscar_conta_por_cpf(cpf):
+    for conta in contas:
+        if conta.usuario.cpf == cpf:
+            return conta
+    print("Conta não encontrada para o CPF fornecido.")
+    return None
+
+if __name__ == "__main__":
+    main()
